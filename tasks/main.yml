@@ -1,0 +1,39 @@
+---
+# tasks file for apivhost
+- name: Copy Proxy file.
+  template:
+    src: proxy.j2
+    dest: /etc/apache2/sites-available/proxy.conf
+    owner: root
+    group: root
+    mode: 0644 
+
+- name: Copy cc.enablex file.
+  template:
+    src: ccdigi.j2
+    dest: /etc/apache2/sites-available/cc.enablex.io.conf
+    owner: root
+    group: root
+    mode: 0644 
+
+- name: Copy Portal file.
+  template:
+    src: vcxportal.j2
+    dest: /etc/apache2/sites-available/vcx-portal.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create Log directories
+  file:
+    path: "{{ directorypath }}{{ansible_hostname}}{{ item }}"
+    state: directory
+    owner: svcvplatx
+    group: svcvplatx
+    mode: 0755
+    recurse: yes
+  register: file_output
+  
+  loop:
+    - /portal
+    - /vcxapps  

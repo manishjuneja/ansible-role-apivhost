@@ -1,0 +1,39 @@
+TraceEnable Off
+
+ServerTokens ProductOnly
+{% for vhost in apache_vhosts %}
+
+<VirtualHost {{apache_listen_ip}}:{{ apache_listen_port }}>
+        ServerName {{ vhost.servername }}
+        RedirectPermanent / "https://{{ vhost.servername }}"
+</VirtualHost>
+
+<IfModule mod_ssl.c>
+<VirtualHost {{apache_listen_ip}}:{{ apache_listen_port_ssl }}>
+        ServerName {{ vhost.servername }}
+        ServerAlias {{ vhost.serveralias }}
+
+        SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+        CustomLog "/opt/vcloudx/var/logs/{{ansible_hostname}}/vcxapps/meeting-qa.enablex.io_ssl_access_log" combined env=!forwarded
+        CustomLog "/opt/vcloudx/var/logs/{{ansible_hostname}}/vcxapps/meeting-qa.enablex.io_ssl_access_log" proxy env=forwarded
+
+        ErrorLog "/opt/vcloudx/var/logs/{{ansible_hostname}}/vcxapps/meeting-qa.enablex.io_ssl_error_log"
+
+        SSLEngine on
+        SSLVerifyClient none
+        SSLProxyEngine On
+        SSLCertificateFile /opt/vcloudx/etc/sslcerts/vcloudx.crt
+        SSLCertificateKeyFile /opt/vcloudx/etc/sslcerts/vcloudx.key
+        SSLCACertificateFile /opt/vcloudx/etc/sslcerts/vcloudx.ca-bundle
+        # HSTS (mod_headers is required) (15768000 seconds = 6 months)
+        Header always set Strict-Transport-Security "max-age=15768000"
+
+        ProxyPass / https://{{ vhost.servername }}:{{proxypass_listen_port}}/
+        ProxyPassReverse / https://{{ vhost.servername }}:{{proxypass_listen_port}}/
+        
+</VirtualHost>
+
+</IfModule>
+
+
+{% endfor %}

@@ -1,0 +1,24 @@
+---
+# vars file for apivhost
+
+apache_listen_port: 80
+apache_listen_port_ssl: 443
+apache_listen_ip: "*"
+apache_vhosts:
+ - servername: "meeting-qa.enablex.io"
+   serveralias: "meeting-qa.enablex.io"
+
+portal_vhosts:
+ - portalname: "portal-qa.enablex.io"
+   portalalias: "www.super-qa.enablex.io"
+
+ccdigital_vhost:
+ - ccdigital_host: cc-digi-qa.enablex.io
+   ccdigitalal_alias: "www.cc-digi-qa.enablex.io"
+
+proxypass_listen_port: 9077
+ccdigital_porxypass_port: 9072
+serveradmin: "itadmin@vcloudx.com"
+
+directorypath: /opt/vcloudx/var/logs/
+

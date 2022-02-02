@@ -1,0 +1,58 @@
+TraceEnable Off
+{% for vhost in ccdigital_vhost %}
+ServerTokens ProductOnly
+
+<VirtualHost {{apache_listen_ip}}:{{ apache_listen_port }}>
+        ServerName {{ vhost.ccdigital_host }}
+        ServerAdmin {{serveradmin}}
+        RedirectPermanent / "https://{{ vhost.ccdigital_host }}/"
+</VirtualHost>
+
+<IfModule mod_ssl.c>
+<VirtualHost {{apache_listen_ip}}:{{ apache_listen_port_ssl }}>
+        ServerName {{ vhost.ccdigital_host }}
+        #ServerAlias {{ vhost.ccdigitalal_alias }}
+        ServerAdmin {{serveradmin}}
+
+        SetEnvIf X-Forwarded-For "^.*\..*\..*\..*" forwarded
+        CustomLog "/opt/vcloudx/var/logs/{{ansible_hostname}}/vcxapps/cc-digi-qa.enablex.io_ssl_access_log" combined env=!forwarded
+        CustomLog "/opt/vcloudx/var/logs/{{ansible_hostname}}/vcxapps/cc-digi-qa.enablex.io_ssl_access_log" proxy env=forwarded
+
+        ErrorLog "/opt/vcloudx/var/logs/{{ansible_hostname}}/vcxapps/cc-digi-qa.enablex.io_ssl_error_log"
+
+        SSLEngine on
+        SSLVerifyClient none
+        SSLProxyEngine On
+        SSLCertificateFile /opt/vcloudx/etc/sslcerts/vcloudx.crt
+        SSLCertificateKeyFile /opt/vcloudx/etc/sslcerts/vcloudx.key
+        SSLCACertificateFile /opt/vcloudx/etc/sslcerts/vcloudx.ca-bundle
+        # HSTS (mod_headers is required) (15768000 seconds = 6 months)
+        Header always set Strict-Transport-Security "max-age=15768000"
+
+        # Enable rewrite engine
+        RewriteEngine on
+
+        # Make sure the original domain name is forwarded to Send
+        # Otherwise the generated URLs will be wrong
+        ProxyPreserveHost on
+
+        # Make sure the generated URL is https://
+        RequestHeader set X-Forwarded-Proto https
+
+        # If it's a normal file (e.g. PNG, CSS) just return it
+        #RewriteCond %{REQUEST_FILENAME} -f
+        #RewriteRule .* - [L]
+
+        # If it's a websocket connection, redirect it to a Send WS connection
+        RewriteCond %{HTTP:Upgrade} =websocket [NC]
+        RewriteCond %{HTTP:Connection} =upgrade [NC]
+        RewriteRule /(.*) wss://{{ vhost.ccdigital_host }}:9072/$1 [P,L]
+
+        # Otherwise redirect it to a normal HTTP connection
+        #RewriteRule ^/(.*)$ https://{{ vhost.ccdigital_host }}:7443/$1 [P,QSA]
+
+        ProxyPass / https://{{ vhost.ccdigital_host }}:{{ccdigital_porxypass_port}}/
+        ProxyPassReverse / https://{{ vhost.ccdigital_host }}:{{ccdigital_porxypass_port}}/
+</VirtualHost>
+</IfModule>
+{% endfor %}
